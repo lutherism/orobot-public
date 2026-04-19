@@ -1,6 +1,6 @@
 # orobot
 
-![Logo](assets/readme-banner.png)).
+![Logo](assets/readme-banner.jpeg)).
 
 CLI and agent toolkit for the [orobot.io](https://orobot.io) robotics platform. Control robots, manage programs, 3D print parts, and design robot assemblies — from the terminal or from an AI agent.
 
