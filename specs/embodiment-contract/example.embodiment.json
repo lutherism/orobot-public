@@ -1,0 +1,61 @@
+{
+  "embodiment_id": "orobot.example.so-arm-6dof-001",
+  "schema_version": "0.1.0",
+  "frame_convention": "REP-103",
+  "dof": 6,
+  "joint_names": [
+    "base_yaw",
+    "shoulder_pitch",
+    "elbow_pitch",
+    "wrist_pitch",
+    "wrist_roll",
+    "gripper"
+  ],
+  "action_space": {
+    "type": "joint_position",
+    "dim": 6,
+    "units": ["rad", "rad", "rad", "rad", "rad", "normalized_01"],
+    "bounds": [
+      [-3.14, 3.14],
+      [-1.57, 1.57],
+      [-2.5, 2.5],
+      [-1.57, 1.57],
+      [-3.14, 3.14],
+      [0.0, 1.0]
+    ]
+  },
+  "state_space": {
+    "channels": [
+      { "name": "joint_pos", "dim": 6, "units": ["rad", "rad", "rad", "rad", "rad", "normalized_01"] },
+      { "name": "joint_vel", "dim": 6, "units": "rad/s" },
+      { "name": "joint_effort", "dim": 6, "units": "Nm" }
+    ]
+  },
+  "control_hz": 30,
+  "cameras": [
+    {
+      "name": "wrist_cam",
+      "link": "wrist_link",
+      "width": 320,
+      "height": 240,
+      "fx": 200.0,
+      "fy": 200.0,
+      "cx": 160.0,
+      "cy": 120.0,
+      "hz": 30
+    }
+  ],
+  "gripper": {
+    "type": "parallel",
+    "open": 1.0,
+    "close": 0.0
+  },
+  "compatible_policies": [
+    "openvla",
+    "openvla-oft",
+    "pi0",
+    "octo",
+    "gr00t-projector",
+    "scripted"
+  ]
+}
