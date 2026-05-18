@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lutherism/orobot-public/specs/embodiment-contract/embodiment.schema.json",
+  "title": "orobot embodiment contract",
+  "description": "Control-side contract for a robot embodiment exported by orobot Parts Builder. Companion to URDF/MJCF. v0.1-experimental — fields and names may change without semver guarantees until v1.0.",
+  "type": "object",
+  "required": [
+    "embodiment_id",
+    "schema_version",
+    "dof",
+    "joint_names",
+    "action_space",
+    "state_space",
+    "control_hz"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "embodiment_id": {
+      "type": "string",
+      "description": "Globally unique stable slug for this embodiment. Convention: <namespace>.<owner>.<robot>-<version>.",
+      "pattern": "^[a-z0-9][a-z0-9._-]*[a-z0-9]$",
+      "minLength": 3,
+      "maxLength": 128
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Version of this schema the document targets. Use exact string match.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "frame_convention": {
+      "type": "string",
+      "description": "Coordinate frame convention. REP-103 = x-forward, z-up, right-handed.",
+      "enum": ["REP-103"],
+      "default": "REP-103"
+    },
+    "dof": {
+      "type": "integer",
+      "description": "Total degrees of freedom. Must equal len(joint_names).",
+      "minimum": 1,
+      "maximum": 64
+    },
+    "joint_names": {
+      "type": "array",
+      "description": "Ordered list of joint names. MUST match the joint order the IK / policy will use. Names should match URDF <joint name=\"...\"> attributes when possible.",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "action_space": {
+      "type": "object",
+      "description": "Shape of the action vector the policy will emit per control step.",
+      "required": ["type", "dim", "units", "bounds"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["joint_position", "joint_velocity", "joint_effort", "ee_delta_pose", "ee_absolute_pose"],
+          "description": "Action-space class. ee_delta_pose / ee_absolute_pose use 6-DoF cartesian (xyz + rpy) plus optional gripper as the trailing dim."
+        },
+        "dim": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "units": {
+          "oneOf": [
+            { "type": "string", "description": "Single unit applied to all dims." },
+            {
+              "type": "array",
+              "description": "Per-dim units; length must equal dim.",
+              "items": { "type": "string" }
+            }
+          ]
+        },
+        "bounds": {
+          "type": "array",
+          "description": "Per-dim [min, max] action limits. Length must equal dim.",
+          "items": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      }
+    },
+    "state_space": {
+      "type": "object",
+      "description": "Shape of the proprioception vector(s) the policy will observe per step.",
+      "required": ["channels"],
+      "additionalProperties": false,
+      "properties": {
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "dim"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "dim": { "type": "integer", "minimum": 1 },
+              "units": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "array", "items": { "type": "string" } }
+                ]
+              }
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "control_hz": {
+      "type": "number",
+      "description": "Nominal control / command rate in Hz.",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "cameras": {
+      "type": "array",
+      "description": "Optional list of cameras mounted on the embodiment. Each camera is keyed to a URDF link name.",
+      "items": {
+        "type": "object",
+        "required": ["name", "link", "width", "height", "hz"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "link": { "type": "string", "description": "URDF link name this camera is rigidly attached to.", "minLength": 1 },
+          "width": { "type": "integer", "minimum": 1 },
+          "height": { "type": "integer", "minimum": 1 },
+          "fx": { "type": "number" },
+          "fy": { "type": "number" },
+          "cx": { "type": "number" },
+          "cy": { "type": "number" },
+          "hz": { "type": "number", "minimum": 1, "maximum": 1000 }
+        }
+      }
+    },
+    "gripper": {
+      "type": "object",
+      "description": "Optional. Describes the gripper / end-effector convention if the robot has one. Every shipping VLA treats gripper as a special channel.",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["parallel", "suction", "magnetic", "soft", "none"]
+        },
+        "open": {
+          "type": "number",
+          "description": "Action value corresponding to fully-open."
+        },
+        "close": {
+          "type": "number",
+          "description": "Action value corresponding to fully-closed."
+        }
+      }
+    },
+    "compatible_policies": {
+      "type": "array",
+      "description": "Tags for policy backends this embodiment is intended to be compatible with. Drives README fine-tune command templating.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "openvla",
+          "openvla-oft",
+          "pi0",
+          "octo",
+          "gr00t-projector",
+          "gemini-er-tool",
+          "scripted"
+        ]
+      },
+      "uniqueItems": true
+    }
+  }
+}
