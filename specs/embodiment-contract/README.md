@@ -23,9 +23,30 @@ README.md             ← per-bundle assembly + fine-tune commands
 
 ## Why publish it
 
-Every generalist robot-control policy in 2026 — OpenVLA, π0, Octo, NVIDIA GR00T, Gemini Robotics, Helix — consumes images and proprioception and emits actions in **some action space at some frequency for some embodiment**. None of them read URDF at inference. The URDF feeds the IK and simulator; the *policy* needs the action/state vector contract, the camera frame, the gripper convention, the control rate.
+Every generalist robot-control policy in 2026 — [OpenVLA](https://arxiv.org/abs/2406.09246), [π0 / π0.5](https://www.pi.website/download/pi0.pdf), [Octo](https://arxiv.org/abs/2405.12213), [NVIDIA GR00T N1.x](https://arxiv.org/abs/2503.14734), [Gemini Robotics 1.5](https://arxiv.org/abs/2510.03342), [Figure Helix](https://www.figure.ai/news/helix) — consumes images and proprioception and emits actions in **some action space at some frequency for some embodiment**. None of them read URDF as direct input to the neural policy at inference time. The URDF feeds the IK and simulator; the *policy* needs the action/state vector contract, the camera frame, the gripper convention, the control rate.
 
 That contract is the layer every VLA implicitly requires and **none of them standardize**. We publish this schema as a small public reference — versioned, experimental, no lobbying — so other tools can adopt or fork it freely. It is the cheapest way for orobot to be a good citizen of the open robotics-AI stack without absorbing the cost of running a standards process.
+
+### Evidence base
+
+The claim "no public 2026 generalist policy ingests URDF as direct input to the neural policy at inference time" rests on a survey of the following models. URDF is used by surrounding runtime stacks for IK, simulation, joint-limit clamping, and synthetic-data generation — but in none of these models does the policy itself read URDF as a tensor, parsed token, or structured prompt.
+
+| Model | Inference inputs | Citations |
+|---|---|---|
+| OpenVLA / OpenVLA-OFT | RGB image + NL instruction; optional proprio vector | [arXiv 2406.09246](https://arxiv.org/abs/2406.09246), [openvla GitHub](https://github.com/openvla/openvla), [OpenVLA-OFT site](https://openvla-oft.github.io/) |
+| RT-X / Open X-Embodiment | Images + language; 7-D EE-pose action across 22 embodiments | [arXiv 2310.08864](https://arxiv.org/abs/2310.08864) |
+| Octo | RGB + proprio; re-headable action space at fine-tune | [arXiv 2405.12213](https://arxiv.org/abs/2405.12213), [octo-models.github.io](https://octo-models.github.io/) |
+| π0 / π0.5 (openpi) | RGB (multi-cam) + language + proprio `q_t`; state/action zero-padded to 18-D | [π0 PDF](https://www.pi.website/download/pi0.pdf), [π0.5 PDF](https://www.pi.website/download/pi05.pdf), [openpi GitHub](https://github.com/Physical-Intelligence/openpi) |
+| NVIDIA GR00T N1.x | RGB + language + proprio; **per-embodiment MLP projector** trained on data — URDF feeds Isaac Sim for synthetic data generation, *not* the policy | [arXiv 2503.14734](https://arxiv.org/abs/2503.14734), [Isaac-GR00T GitHub](https://github.com/NVIDIA/Isaac-GR00T) |
+| Gemini Robotics ER (1.5/1.6) | Image/video + language → 2D points, bounding boxes, JSON plans (orchestration, not motor control) | [arXiv 2510.03342](https://arxiv.org/abs/2510.03342), [Gemini Robotics overview](https://ai.google.dev/gemini-api/docs/robotics-overview) |
+| Gemini Robotics 1.5 VLA | Closed; multi-embodiment Motion Transfer; embodiments are ALOHA / Bi-arm Franka / Apollo humanoid, not arbitrary URDFs | Same arXiv 2510.03342 |
+| Figure Helix | Closed; embodiment-locked to Figure 02 humanoid | [Figure Helix announcement](https://www.figure.ai/news/helix) |
+| ALOHA / Mobile ALOHA | Hardware platform + data convention (14-D joint-position @ 50 Hz; +2 base channels for Mobile) | [ALOHA PDF](https://tonyzhaozh.github.io/aloha/aloha.pdf), [Mobile ALOHA arXiv 2401.02117](https://arxiv.org/html/2401.02117v1) |
+| X-VLA (ICLR 2026) | Per-domain `meta.json` trajectory listing + soft-prompted cross-embodiment adapter; no URDF ingestion | [X-VLA GitHub](https://github.com/2toinf/X-VLA) |
+
+**Falsifier:** a single shipping or public-weights 2026 generalist policy whose inference input includes URDF (or any robot-description schema) as a tensor, parsed token, or structured prompt. If such a model exists or ships, the claim is wrong and this schema's positioning needs revision — please file an issue with the citation.
+
+**Provenance disclosure:** the survey above was compiled via secondary research (LLM-assisted literature scan, May 2026) and has not been line-by-line verified against each paper. Confidence is high for the well-press-covered models (OpenVLA, π0, GR00T, Gemini ER, ALOHA) and moderate for newer / lower-coverage ones (CogACT, X-VLA). Treat the table as a starting point, not the final word.
 
 ## What this is NOT
 
